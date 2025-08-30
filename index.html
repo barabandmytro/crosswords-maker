@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Кросворд - Конструктор</title>
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/grid.css">
+    <link rel="stylesheet" href="css/interface.css">
+</head>
+<body>
+    <!-- Хедер з назвою та основними кнопками -->
+    <header class="header">
+        <div class="container">
+            <h1 class="title">Конструктор Кросвордів</h1>
+            <div class="header-controls">
+                <button id="new-crossword" class="btn btn-primary">Новий кросворд</button>
+                <button id="save-crossword" class="btn btn-secondary">Зберегти</button>
+                <button id="load-crossword" class="btn btn-secondary">Завантажити</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Основний контент -->
+    <main class="main">
+        <div class="container">
+            <!-- Панель управління -->
+            <section class="control-panel">
+                <div class="panel-section">
+                    <h2>Налаштування сітки</h2>
+                    <div class="grid-controls">
+                        <label for="grid-width">Ширина:</label>
+                        <input type="number" id="grid-width" min="5" max="20" value="15">
+                        
+                        <label for="grid-height">Висота:</label>
+                        <input type="number" id="grid-height" min="5" max="20" value="15">
+                        
+                        <button id="generate-grid" class="btn btn-primary">Створити сітку</button>
+                    </div>
+                </div>
+
+                <div class="panel-section">
+    <h2>Додавання слів</h2>
+    <div class="word-controls">
+        <input type="text" id="word-input" placeholder="Введіть слово" maxlength="20">
+        <input type="text" id="clue-input" placeholder="Введіть питання/підказку">
+        <div class="direction-controls">
+            <label>
+                <input type="radio" name="direction" value="horizontal" checked>
+                Горизонтально
+            </label>
+            <label>
+                <input type="radio" name="direction" value="vertical">
+                Вертикально
+            </label>
+        </div>
+        <button id="add-word" class="btn btn-success">Додати слово</button>
+        <button id="start-game" class="btn btn-primary" style="margin-top: 15px;">🎮 Почати гру</button>
+        <button id="back-to-editor" class="btn btn-secondary" style="margin-top: 5px; display: none;">📝 Повернутись до редактора</button>
+    </div>
+</div>
+                </div>
+            </section>
+
+            <!-- Основна робоча область -->
+            <section class="workspace">
+                <!-- Сітка кросворду -->
+                <div class="crossword-container">
+                    <div id="crossword-grid" class="crossword-grid">
+                        <!-- Сітка буде генеруватись динамічно -->
+                    </div>
+                </div>
+
+                <!-- Список слів та підказок -->
+                <aside class="clues-panel">
+                    <div class="clues-section">
+                        <h3>Горизонтальні слова</h3>
+                        <ul id="horizontal-clues" class="clues-list">
+                            <!-- Підказки будуть додаватись динамічно -->
+                        </ul>
+                    </div>
+                    
+                    <div class="clues-section">
+                        <h3>Вертикальні слова</h3>
+                        <ul id="vertical-clues" class="clues-list">
+                            <!-- Підказки будуть додаватись динамічно -->
+                        </ul>
+                    </div>
+                </aside>
+            </section>
+
+            <!-- Режим гри -->
+            <section class="game-mode" style="display: none;">
+                <div class="game-controls">
+                    <button id="start-game" class="btn btn-primary">Почати гру</button>
+                    <button id="check-answers" class="btn btn-info">Перевірити відповіді</button>
+                    <button id="show-answers" class="btn btn-warning">Показати відповіді</button>
+                    <button id="back-to-editor" class="btn btn-secondary">Повернутись до редактора</button>
+                </div>
+                
+                <div class="game-stats">
+                    <span id="completed-words">Заповнено: 0</span>
+                    <span id="total-words">Всього слів: 0</span>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Модальні вікна -->
+    <div id="modal-overlay" class="modal-overlay" style="display: none;">
+        <!-- Модальне вікно для налаштувань -->
+        <div id="settings-modal" class="modal">
+            <div class="modal-header">
+                <h3>Налаштування кросворду</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-content">
+                <label for="crossword-title">Назва кросворду:</label>
+                <input type="text" id="crossword-title" placeholder="Введіть назву">
+                
+                <label for="crossword-theme">Тема:</label>
+                <input type="text" id="crossword-theme" placeholder="Введіть тему">
+                
+                <label for="difficulty">Складність:</label>
+                <select id="difficulty">
+                    <option value="easy">Легка</option>
+                    <option value="medium">Середня</option>
+                    <option value="hard">Складна</option>
+                </select>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary">Зберегти</button>
+                <button class="btn btn-secondary modal-close">Скасувати</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Повідомлення та статуси -->
+    <div id="notifications" class="notifications-container">
+        <!-- Повідомлення будуть з'являтись тут -->
+    </div>
+
+    <!-- Підключення JavaScript файлів -->
+    <script src="js/helpers/gridHelper.js"></script>
+    <script src="js/helpers/wordHelper.js"></script>
+    <script src="js/helpers/renderHelper.js"></script>
+    <script src="js/validators/wordValidator.js"></script>
+    <script src="js/validators/gridValidator.js"></script>
+    <script src="js/components/crosswordGrid.js"></script>
+    <script src="js/components/wordInput.js"></script>
+    <script src="js/components/cluesList.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>
