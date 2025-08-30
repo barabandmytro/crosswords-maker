@@ -422,7 +422,6 @@ class CrosswordApp {
         this.renderGrid();
         this.updateCluesPanel();
         this.showNotification(`Слово "${word}" додано`, 'success');
-        this.updateUI();
     }
 
     /**
@@ -575,33 +574,50 @@ class CrosswordApp {
      * Перевірка відповідей
      */
     checkAnswers() {
-        let correctCells = 0;
-        let totalCells = 0;
+    let correctWords = 0;
+    let totalWords = this.state.words.size;
+    
+    // Перевірити кожне слово окремо
+    this.state.words.forEach(wordData => {
+        let wordIsCompletelyCorrect = true;
         
-        this.state.grid.forEach((row, rowIndex) => {
-            row.forEach((cell, colIndex) => {
-                if (cell.gameValue) { // Клітинка є частиною слова
-                    totalCells++;
-                    const cellElement = this.elements.gridContainer.querySelector(
-                        `[data-row="${rowIndex}"][data-col="${colIndex}"]`
-                    );
-                    
-                    if (cell.letter === cell.gameValue) {
-                        correctCells++;
-                        cellElement?.classList.add('correct');
-                        cellElement?.classList.remove('incorrect');
-                    } else {
-                        cellElement?.classList.add('incorrect');
-                        cellElement?.classList.remove('correct');
-                    }
+        // Перевірити кожну літеру цього слова
+        for (let i = 0; i < wordData.word.length; i++) {
+            const row = wordData.direction === 'vertical' ? wordData.startRow + i : wordData.startRow;
+            const col = wordData.direction === 'horizontal' ? wordData.startCol + i : wordData.startCol;
+            
+            if (row >= 0 && row < this.state.grid.length && col >= 0 && col < this.state.grid[0].length) {
+                const cell = this.state.grid[row][col];
+                const expectedLetter = wordData.word[i];
+                const cellElement = this.elements.gridContainer.querySelector(
+                    `[data-row="${row}"][data-col="${col}"]`
+                );
+                
+                // Порівняти введену літеру з правильною
+                if (cell.letter === expectedLetter) {
+                    cellElement?.classList.add('correct');
+                    cellElement?.classList.remove('incorrect');
+                } else {
+                    cellElement?.classList.add('incorrect');
+                    cellElement?.classList.remove('correct');
+                    wordIsCompletelyCorrect = false;
                 }
-            });
-        });
+            } else {
+                wordIsCompletelyCorrect = false;
+            }
+        }
         
-        const percentage = Math.round((correctCells / totalCells) * 100);
-        this.showNotification(`Правильно: ${correctCells}/${totalCells} (${percentage}%)`, 'info');
-        this.updateGameStats();
-    }
+        // Якщо все слово правильне, збільшити лічильник
+        if (wordIsCompletelyCorrect) {
+            correctWords++;
+        }
+    });
+    
+    // Показати результат для СЛІВ, а не символів
+    const percentage = totalWords > 0 ? Math.round((correctWords / totalWords) * 100) : 0;
+    this.showNotification(`Правильно: ${correctWords}/${totalWords} слів (${percentage}%)`, 'info');
+    this.updateGameStats();
+}
 
     /**
      * Показ всіх відповідей
@@ -632,25 +648,39 @@ class CrosswordApp {
     /**
      * Підрахунок завершених слів
      */
-    getCompletedWordsCount() {
-        let completed = 0;
+   getCompletedWordsCount() {
+    let completed = 0;
+    
+    this.state.words.forEach(wordData => {
+        let wordCompleted = true;
         
-        this.state.words.forEach(wordData => {
-            let wordCompleted = true;
-            for (let i = 0; i < wordData.word.length; i++) {
-                const row = wordData.direction === 'vertical' ? wordData.startRow + i : wordData.startRow;
-                const col = wordData.direction === 'horizontal' ? wordData.startCol + i : wordData.startCol;
+        // Перевірити чи все слово заповнене правильно
+        for (let i = 0; i < wordData.word.length; i++) {
+            const row = wordData.direction === 'vertical' ? wordData.startRow + i : wordData.startRow;
+            const col = wordData.direction === 'horizontal' ? wordData.startCol + i : wordData.startCol;
+            
+            if (row >= 0 && row < this.state.grid.length && 
+                col >= 0 && col < this.state.grid[0].length) {
                 
-                if (!this.state.grid[row][col].letter) {
+                const cell = this.state.grid[row][col];
+                const expectedLetter = wordData.word[i];
+                
+                // Слово вважається завершеним тільки якщо всі літери правильні
+                if (!cell.letter || cell.letter !== expectedLetter) {
                     wordCompleted = false;
                     break;
                 }
+            } else {
+                wordCompleted = false;
+                break;
             }
-            if (wordCompleted) completed++;
-        });
+        }
         
-        return completed;
-    }
+        if (wordCompleted) completed++;
+    });
+    
+    return completed;
+}
 
     /**
      * Створення нового кросворду
@@ -679,23 +709,30 @@ class CrosswordApp {
      * Збереження кросворду
      */
     saveCrossword() {
-        const saveData = {
-            gridSize: this.state.gridSize,
-            words: Array.from(this.state.words.entries()),
-            grid: this.state.grid,
-            timestamp: new Date().toISOString()
-        };
+    const saveData = {
+        gridSize: this.state.gridSize,
+        words: Array.from(this.state.words.entries()),
+        grid: this.state.grid,
+        timestamp: new Date().toISOString()
+    };
 
-        try {
-            localStorage.setItem('crossword_save', JSON.stringify(saveData));
-            this.state.hasUnsavedChanges = false;
-            this.state.lastSaveTime = new Date();
-            this.showNotification('Кросворд збережено', 'success');
-        } catch (error) {
-            this.showNotification('Помилка збереження', 'error');
-            console.error('Save error:', error);
+    try {
+        localStorage.setItem('crossword_save', JSON.stringify(saveData));
+        this.state.hasUnsavedChanges = false;
+        this.state.lastSaveTime = new Date();
+        this.showNotification('Кросворд збережено', 'success');
+        
+        this.updateUI(); // Оновити стан всіх кнопок
+        // Або просто активувати кнопку гри якщо є слова:
+        if (this.state.words.size > 0 && this.elements.startGame) {
+            this.elements.startGame.disabled = false;
         }
+        
+    } catch (error) {
+        this.showNotification('Помилка збереження', 'error');
+        console.error('Save error:', error);
     }
+}
 
     /**
      * Завантаження кросворду
